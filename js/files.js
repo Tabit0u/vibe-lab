@@ -1,1 +1,0 @@
-// ⚠️ Déplacé vers files/logic.js + files/ui.jsx — ce fichier peut être supprimé.
