@@ -14,6 +14,7 @@ function App() {
   const tabs = [
     { id: "jeu", label: "🎯 Mini-jeu" },
     { id: "widgets", label: "🧩 Widgets" },
+    { id: "pixel", label: "🎨 Pixel" },
     { id: "fichiers", label: "💾 Fichiers" },
   ];
 
@@ -27,10 +28,10 @@ function App() {
         <span className="rounded-full bg-violet-600/20 px-2 py-1 text-xs text-violet-300">{state.pseudo}</span>
       </header>
 
-      <nav className="flex gap-1 rounded-xl bg-slate-800 p-1">
+      <nav className="flex gap-1 overflow-x-auto rounded-xl bg-slate-800 p-1">
         {tabs.map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={"flex-1 rounded-lg px-2 py-2 text-xs font-semibold transition " + (tab === t.id ? "bg-violet-600 text-white" : "text-slate-300")}>
+            className="flex-1 whitespace-nowrap rounded-lg px-2 py-2 text-[11px] font-semibold transition " + (tab === t.id ? "bg-violet-600 text-white" : "text-slate-300")}>
             {t.label}
           </button>
         ))}
@@ -39,10 +40,11 @@ function App() {
       <main className="flex-1">
         {tab === "jeu" && <ReactionGame state={state} setState={setState} busEmit={busEmit} />}
         {tab === "widgets" && <WidgetPanel state={state} setState={setState} log={log} />}
+        {tab === "pixel" && <PixelStudio busEmit={busEmit} />}
         {tab === "fichiers" && <FilesPanel state={state} setState={setState} busEmit={busEmit} />}
       </main>
 
-      <footer className="text-center text-[11px] text-slate-500">Vibe Lab v0.4 — fait avec Vibe, testé depuis ton téléphone 📱</footer>
+      <footer className="text-center text-[11px] text-slate-500">Vibe Lab v0.5 — fait avec Vibe, testé depuis ton téléphone 📱</footer>
     </div>
   );
 }

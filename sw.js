@@ -1,10 +1,11 @@
-const CACHE = "vibe-lab-v5";
+const CACHE = "vibe-lab-v6";
 const ASSETS = [
   "./", "./index.html", "./manifest.webmanifest", "./icon.svg",
   "./core/signals.js", "./core/storage.js",
   "./game/logic.js", "./game/ui.jsx",
   "./widgets/logic.js", "./widgets/ui.jsx",
   "./files/logic.js", "./files/ui.jsx",
+  "./pixel/logic.js", "./pixel/ui.jsx",
   "./app.js",
 ];
 self.addEventListener("install", (e) => {
