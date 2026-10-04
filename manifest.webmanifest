@@ -1,0 +1,12 @@
+{
+  "name": "Vibe Lab",
+  "short_name": "Vibe Lab",
+  "description": "Labo d'exploration : UI, signaux, sauvegarde, mini-jeu",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
