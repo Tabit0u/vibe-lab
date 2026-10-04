@@ -1,1 +1,0 @@
-// ⚠️ Déplacé vers game/logic.js + game/ui.jsx — ce fichier peut être supprimé.
