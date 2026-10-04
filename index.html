@@ -189,7 +189,7 @@ function App() {
         {tab === "widgets" && <WidgetPanel state={state} setState={setState} log={log} />}
         {tab === "fichiers" && (
           <div className="flex flex-col gap-4 text-sm">
-            <p className="text-slate-300">ZZYYXXXXXX Sauvegarde automatique en local (localStorage). Exporte ou importe un fichier .json pour tester la persistance.</p>
+            <p className="text-slate-300">ZZYYXXXXZZ Sauvegarde automatique en local (localStorage). Exporte ou importe un fichier .json pour tester la persistance.</p>
             <pre className="overflow-x-auto rounded-xl border border-slate-700 bg-black/60 p-3 font-mono text-[11px] text-cyan-300">
               {JSON.stringify(state, null, 2)}
             </pre>
@@ -202,7 +202,7 @@ function App() {
         )}
       </main>
 
-      <footer className="text-center text-[11px] text-slate-500">Vibe Lab v0.2 — fait avec Vibe, testé depuis ton téléphone 📱</footer>
+      <footer className="text-center text-[11px] text-slate-500">Vibe Lab v0.3 — fait avec Vibe, testé depuis ton téléphone 📱</footer>
     </div>
   );
 }
