@@ -34,7 +34,7 @@ function createSignalBus() {
 }
 const bus = createSignalBus();
 
-/* ====== 2. Persistance : localStorage + export/import fichier ====== */
+/* ====== 2. Persistance ====== */
 const STORAGE_KEY = "vibe-lab-state-v1";
 const saveLocal = (d) => localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
 const loadLocal = () => {
@@ -83,9 +83,9 @@ function ReactionGame({ state, setState, busEmit }) {
         <button
           onClick={() => { setPlaying(!playing); if (!playing) { setState((s) => ({ ...s, score: 0 })); busEmit("game:start", {}); } }}
           className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white active:scale-95"
-        >{playing ? "Stop" : "\u25B6 Jouer (10 s)"}</button>
+        >{playing ? "Stop" : "▶ Jouer (10 s)"}</button>
         <span className="text-sm text-slate-300">
-          Score : <b className="text-white">{state.score}</b> \u00B7 Record : <b className="text-white">{state.best}</b> \u00B7 \u23F1 {playing ? timeLeft : 0}s
+          Score : <b className="text-white">{state.score}</b> · Record : <b className="text-white">{state.best}</b> · ⏱ {playing ? timeLeft : 0}s
         </span>
       </div>
       <div onPointerDown={hit} className="relative h-72 w-full overflow-hidden rounded-xl border border-slate-700 bg-slate-900">
@@ -94,7 +94,7 @@ function ReactionGame({ state, setState, busEmit }) {
             className="absolute h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 shadow-lg shadow-violet-500/40 active:scale-90" />
         ) : (
           <p className="flex h-full items-center justify-center text-sm text-slate-400 px-6 text-center">
-            Appuie sur \u00AB Jouer \u00BB puis touche les cibles le plus vite possible \uD83C\uDFAF
+            Appuie sur « Jouer » puis touche les cibles le plus vite possible 🎯
           </p>
         )}
       </div>
@@ -117,7 +117,7 @@ function WidgetPanel({ state, setState, log }) {
             className="w-40 accent-violet-500" />
         </label>
         <label className="flex items-center justify-between text-sm text-slate-200">
-          Th\u00E8me {state.theme === "nuit" ? "\uD83C\uDF19" : "\u2600\uFE0F"}
+          Thème {state.theme === "nuit" ? "🌙" : "☀️"}
           <button onClick={() => { const ns = { ...state, theme: state.theme === "nuit" ? "jour" : "nuit" }; setState(ns); saveLocal(ns); }}
             className={"relative h-6 w-11 rounded-full transition " + (state.theme === "nuit" ? "bg-violet-600" : "bg-slate-600")}>
             <span className={"absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all " + (state.theme === "nuit" ? "left-[22px]" : "left-0.5")} />
@@ -125,9 +125,9 @@ function WidgetPanel({ state, setState, log }) {
         </label>
       </div>
       <div className="rounded-xl border border-slate-700 bg-black/60 p-3">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Flux de signaux (temps r\u00E9el)</p>
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Flux de signaux (temps réel)</p>
         <div className="h-28 overflow-y-auto font-mono text-[11px] leading-5 text-emerald-400">
-          {log.length === 0 ? <span className="text-slate-500">\u2014 aucun signal \u2014</span> : log.map((l, i) => <div key={i}>{l}</div>)}
+          {log.length === 0 ? <span className="text-slate-500">— aucun signal —</span> : log.map((l, i) => <div key={i}>{l}</div>)}
         </div>
       </div>
     </div>
@@ -143,7 +143,7 @@ function App() {
 
   const busEmit = useCallback((event, payload) => {
     bus.emit(event, payload);
-    setLog((l) => ["\u26A1 " + event + " " + JSON.stringify(payload).slice(0, 50), ...l].slice(0, 20));
+    setLog((l) => ["⚡ " + event + " " + JSON.stringify(payload).slice(0, 50), ...l].slice(0, 20));
   }, []);
 
   const importFile = (e) => {
@@ -160,9 +160,9 @@ function App() {
   };
 
   const tabs = [
-    { id: "jeu", label: "\uD83C\uDFAF Mini-jeu" },
-    { id: "widgets", label: "\uD83E\uDDE9 Widgets" },
-    { id: "fichiers", label: "\uD83D\uDCBE Fichiers" },
+    { id: "jeu", label: "🎯 Mini-jeu" },
+    { id: "widgets", label: "🧩 Widgets" },
+    { id: "fichiers", label: "💾 Fichiers" },
   ];
 
   return (
@@ -170,7 +170,7 @@ function App() {
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold">Vibe Lab</h1>
-          <p className="text-xs text-slate-400">UI \u00B7 Signaux \u00B7 Sauvegarde \u2014 exploration mobile</p>
+          <p className="text-xs text-slate-400">UI · Signaux · Sauvegarde — exploration mobile</p>
         </div>
         <span className="rounded-full bg-violet-600/20 px-2 py-1 text-xs text-violet-300">{state.pseudo}</span>
       </header>
@@ -194,15 +194,15 @@ function App() {
               {JSON.stringify(state, null, 2)}
             </pre>
             <button onClick={() => { downloadFile(state); busEmit("file:exported", {}); }}
-              className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold active:scale-95">\u2B07 Exporter en .json</button>
+              className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold active:scale-95">⬇ Exporter en .json</button>
             <button onClick={() => fileInput.current?.click()}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold active:scale-95">\u2B06 Importer un fichier</button>
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold active:scale-95">⬆ Importer un fichier</button>
             <input ref={fileInput} type="file" accept=".json" onChange={importFile} className="hidden" />
           </div>
         )}
       </main>
 
-      <footer className="text-center text-[11px] text-slate-500">Vibe Lab v0.1 \u2014 fait avec Vibe, test\u00E9 depuis ton t\u00E9l\u00E9phone \uD83D\uDCF1</footer>
+      <footer className="text-center text-[11px] text-slate-500">Vibe Lab v0.2 — fait avec Vibe, testé depuis ton téléphone 📱</footer>
     </div>
   );
 }
