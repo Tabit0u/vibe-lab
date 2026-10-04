@@ -1,1 +1,0 @@
-// ⚠️ Déplacé vers widgets/logic.js + widgets/ui.jsx — ce fichier peut être supprimé.
