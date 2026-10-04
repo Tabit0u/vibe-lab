@@ -1,5 +1,9 @@
-const CACHE = "vibe-lab-v3";
-const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
+const CACHE = "vibe-lab-v4";
+const ASSETS = [
+  "./", "./index.html", "./manifest.webmanifest", "./icon.svg",
+  "./js/signals.js", "./js/storage.js", "./js/game.js",
+  "./js/widgets.js", "./js/files.js", "./js/app.js",
+];
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
   self.skipWaiting();
@@ -11,9 +15,6 @@ self.addEventListener("activate", (e) => {
     ).then(() => self.clients.claim())
   );
 });
-// Stratégie network-first pour les fichiers de l'app : les mises à jour
-// sont visibles immédiatement ; le cache ne sert qu'en hors-ligne.
-// Les CDN (React, Tailwind, Babel) restent cache-first pour la vitesse.
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   const isCdn = url.hostname !== self.location.hostname;
