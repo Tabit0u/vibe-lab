@@ -1,8 +1,11 @@
-const CACHE = "vibe-lab-v4";
+const CACHE = "vibe-lab-v5";
 const ASSETS = [
   "./", "./index.html", "./manifest.webmanifest", "./icon.svg",
-  "./js/signals.js", "./js/storage.js", "./js/game.js",
-  "./js/widgets.js", "./js/files.js", "./js/app.js",
+  "./core/signals.js", "./core/storage.js",
+  "./game/logic.js", "./game/ui.jsx",
+  "./widgets/logic.js", "./widgets/ui.jsx",
+  "./files/logic.js", "./files/ui.jsx",
+  "./app.js",
 ];
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
