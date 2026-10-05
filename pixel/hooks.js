@@ -99,13 +99,17 @@ function usePaintSession(doc, setDoc, commit, paintLayer, busEmit) {
   const redoRef = useRef(null);
   const setUndoRedo = (undo, redo) => { undoRef.current = undo; redoRef.current = redo; };
 
-  const setCanvasSize = (cw, ch) => {
-    setView((v) => clampPan(v, doc, cw, ch));
-  };
+  /* doc via ref : callbacks stables, aucun re-render en cascade */
+  const docRef = useRef(doc);
+  docRef.current = doc;
 
-  const fitToCanvas = (cw, ch) => setView(fitView(doc, cw, ch));
+  const setCanvasSize = useCallback((cw, ch) => {
+    setView((v) => clampPan(v, docRef.current, cw, ch));
+  }, []);
 
-  const zoomBy = (factor, pivot) => setView((v) => zoomAt(v, factor, pivot));
+  const fitToCanvas = useCallback((cw, ch) => setView(fitView(docRef.current, cw, ch)), []);
+
+  const zoomBy = useCallback((factor, pivot) => setView((v) => zoomAt(v, factor, pivot)), []);
 
   /* conversion cellule : tient compte du viewport (zoom/pan) */
   const cellFromEvent = (e) => {

@@ -27,7 +27,8 @@ function zoomAt(view, factor, pivot) {
   return { scale: ns, ox: pivot.x - (pivot.x - view.ox) * k, oy: pivot.y - (pivot.y - view.oy) * k };
 }
 
-/* maintient le document visible : rembobine le pan si possible */
+/* maintient le document visible : rembobine le pan si possible.
+   retourne la MÊME référence si rien ne change (stabilité pour React) */
 function clampPan(view, doc, cw, ch) {
   const dw = doc.width * view.scale, dh = doc.height * view.scale;
   let { ox, oy } = view;
@@ -35,6 +36,7 @@ function clampPan(view, doc, cw, ch) {
   else ox = Math.min(0, Math.max(cw - dw, ox));
   if (dh <= ch) oy = (ch - dh) / 2;
   else oy = Math.min(0, Math.max(ch - dh, oy));
+  if (ox === view.ox && oy === view.oy) return view;
   return { ...view, ox, oy };
 }
 
