@@ -4,14 +4,43 @@
  * <SaveLoadBar> — composants purs, pilotés par props
  * ======================================================= */
 
-function PixelCanvas({ doc, handlers, canvasRef }) {
-  useEffect(() => { drawDoc(canvasRef.current, doc, { checker: true }); }, [doc]);
+function PixelCanvas({ doc, view, setCanvasSize, fitToCanvas, zoomBy, handlers, canvasRef }) {
+  useEffect(() => {
+    drawDoc(canvasRef.current, doc, { checker: true, view: view });
+  }, [doc, view]);
+
+  useEffect(() => {
+    const c = canvasRef.current;
+    if (!c) return;
+    const apply = () => setCanvasSize(c.clientWidth, c.clientHeight);
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(c);
+    return () => ro.disconnect();
+  }, [setCanvasSize]);
+
   return (
-    <div className="flex justify-center rounded-xl bg-slate-800/50 p-2">
+    <div className="relative overflow-hidden rounded-xl bg-slate-800/50 p-2">
       <canvas ref={canvasRef}
               {...handlers}
-              className="rounded-md shadow-lg"
-              style={{ width: "100%", maxWidth: Math.min(340, doc.width * 24) + "px", touchAction: "none", imageRendering: "pixelated" }} />
+              className="block h-[46vh] w-full touch-none rounded-md shadow-lg"
+              style={{ imageRendering: "pixelated" }} />
+      {/* aide tactile */}
+      <p className="pointer-events-none absolute bottom-3 left-0 right-0 text-center text-[10px] text-slate-400/70">
+        1 doigt : peindre · 2 doigts : zoomer / déplacer
+      </p>
+    </div>
+  );
+}
+
+function ViewportBar({ view, fitToCanvas, zoomBy }) {
+  const btn = "rounded-lg bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-200 active:scale-95";
+  return (
+    <div className="flex items-center gap-1.5">
+      <button onClick={() => zoomBy(1 / 1.25)} className={btn} title="Dézoomer">➖</button>
+      <span className="min-w-[3rem] text-center font-mono text-[11px] text-slate-400">×{view.scale}</span>
+      <button onClick={() => zoomBy(1.25)} className={btn} title="Zoomer">➕</button>
+      <button onClick={fitToCanvas} className={btn} title="Ajuster">⤢</button>
     </div>
   );
 }
@@ -113,7 +142,7 @@ function LayerTree({ doc, entries, selId, editingId, draft, setDraft,
   );
 }
 
-function SaveLoadBar({ doc, pngScale, setPngScale, newSize, setNewSize,
+function SaveLoadBar({ pngScale, setPngScale, newSize, setNewSize,
                        onExportPng, onExportJson, onImportJson, onNewDoc }) {
   const fileRef = useRef(null);
   return (

@@ -79,18 +79,29 @@ function usePaintSession(doc, setDoc, paintLayer, busEmit) {
   const [tool, setTool] = useState("brush");
   const [color, setColor] = useState("#000000");
   const [brush, setBrush] = useState(1);
+  const [view, setView] = useState(() => newView(24));
   const drawing = useRef(false);
+  /* suivi du pinch/pan : pointeurs actifs + dernier état */
+  const pointers = useRef(new Map());
+  const gesture = useRef({ pinchDist: 0, pan: null, painted: false });
 
-  const cellFromEvent = (e, canvas) => {
-    const r = canvas.getBoundingClientRect();
-    return {
-      x: Math.floor(((e.clientX - r.left) / r.width) * doc.width),
-      y: Math.floor(((e.clientY - r.top) / r.height) * doc.height),
-    };
+  const setCanvasSize = (cw, ch) => {
+    setView((v) => clampPan(v, doc, cw, ch));
   };
 
-  const paintCell = (e, setDoc) => {
-    const c = cellFromEvent(e, e.currentTarget);
+  const fitToCanvas = (cw, ch) => setView(fitView(doc, cw, ch));
+
+  const zoomBy = (factor, pivot) => setView((v) => zoomAt(v, factor, pivot));
+
+  /* conversion cellule : tient compte du viewport (zoom/pan) */
+  const cellFromEvent = (e) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const p = toPixel(view, e.clientX - r.left, e.clientY - r.top);
+    return { x: Math.floor(p.x), y: Math.floor(p.y) };
+  };
+
+  const paintCell = (e) => {
+    const c = cellFromEvent(e);
     if (c.x < 0 || c.y < 0 || c.x >= doc.width || c.y >= doc.height) return;
     if (tool === "picker") {
       const picked = pickColor(doc, c.x, c.y);
@@ -103,16 +114,82 @@ function usePaintSession(doc, setDoc, paintLayer, busEmit) {
     setDoc((d) => paintAt(d, layerId, c, tool, color, brush));
   };
 
-  const handlers = {
-    onPointerDown: (e) => {
-      drawing.current = true;
-      try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
-      paintCell(e);
-    },
-    onPointerMove: (e) => { if (drawing.current) paintCell(e); },
-    onPointerUp: () => { drawing.current = false; },
-    onPointerCancel: () => { drawing.current = false; },
+  /* ---- gestures : 1 doigt = peindre, 2 doigts = pinch zoom + pan ---- */
+  const updateGesture = (e) => {
+    const pts = pointers.current;
+    if (pts.size === 2) {
+      const [a, b] = Array.from(pts.values());
+      return pinchInfo(a, b);
+    }
+    return null;
   };
 
-  return { tool, setTool, color, setColor, brush, setBrush, handlers };
+  const handlers = {
+    onPointerDown: (e) => {
+      pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.current.size === 1) {
+        drawing.current = true;
+        gesture.current.painted = false;
+        try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
+        paintCell(e);
+      } else {
+        /* 2e doigt : on arrête le tracé, on démarre le pinch */
+        drawing.current = false;
+        gesture.current.pan = null;
+        const info = updateGesture(e);
+        if (info) gesture.current.pinchDist = info.dist;
+      }
+    },
+    onPointerMove: (e) => {
+      if (pointers.current.has(e.pointerId)) pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.current.size >= 2) {
+        const [a, b] = Array.from(pointers.current.values());
+        const info = pinchInfo(a, b);
+        const rect = e.currentTarget.getBoundingClientRect();
+        /* zoom pinch autour du milieu des deux doigts */
+        setView((v) => {
+          let nv = zoomAt(v, pinchFactor(gesture.current.pinchDist, info.dist), { x: info.cx - rect.left, y: info.cy - rect.top });
+          /* pan : suit le déplacement du milieu */
+          if (gesture.current.pan) {
+            nv = { ...nv, ox: nv.ox + (info.cx - gesture.current.pan.cx), oy: nv.oy + (info.cy - gesture.current.pan.cy) };
+          }
+          gesture.current.pinchDist = info.dist;
+          gesture.current.pan = { cx: info.cx, cy: info.cy };
+          return clampPan(nv, doc, rect.width, rect.height);
+        });
+      } else if (drawing.current) {
+        paintCell(e);
+      }
+    },
+    onPointerUp: (e) => {
+      pointers.current.delete(e.pointerId);
+      if (pointers.current.size === 0) {
+        drawing.current = false;
+        gesture.current.pan = null;
+      } else if (pointers.current.size === 1) {
+        /* retour à 1 doigt : on ne reprend pas le tracé (évite les traits parasites) */
+        drawing.current = false;
+        gesture.current.pan = null;
+        gesture.current.pinchDist = 0;
+      }
+    },
+    onPointerCancel: (e) => {
+      pointers.current.delete(e.pointerId);
+      drawing.current = false;
+      gesture.current.pan = null;
+      gesture.current.pinchDist = 0;
+    },
+    /* zoom molette (desktop) autour du curseur */
+    onWheel: (e) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      const r = e.currentTarget.getBoundingClientRect();
+      zoomBy(e.deltaY < 0 ? 1.15 : 1 / 1.15, { x: e.clientX - r.left, y: e.clientY - r.top });
+    },
+  };
+
+  return {
+    tool, setTool, color, setColor, brush, setBrush,
+    view, setView, setCanvasSize, fitToCanvas, zoomBy, handlers,
+  };
 }

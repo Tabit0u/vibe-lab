@@ -14,7 +14,7 @@ function PixelStudio({ busEmit }) {
   const px = usePixelDoc(busEmit);
   const { doc, replaceDoc, selId, setSelId, entries, applyChecker } = px;
   const session = usePaintSession(doc, px.setDoc, px.paintLayer, busEmit);
-  const { tool, setTool, color, setColor, brush, setBrush } = session;
+  const { tool, setTool, color, setColor, brush, setBrush, view, setCanvasSize, fitToCanvas, zoomBy } = session;
 
   /* renommage inline */
   const startRename = (node) => { setEditingId(node.id); setDraft(node.name); };
@@ -39,9 +39,14 @@ function PixelStudio({ busEmit }) {
 
   return (
     <div className="flex flex-col gap-3 text-sm">
-      <PixelCanvas doc={doc} canvasRef={canvasRef} handlers={session.handlers} />
+      <PixelCanvas doc={doc} view={view} canvasRef={canvasRef}
+                   setCanvasSize={setCanvasSize} fitToCanvas={fitToCanvas} zoomBy={zoomBy}
+                   handlers={session.handlers} />
 
-      <PaintToolbar tool={tool} setTool={setTool} brush={brush} setBrush={setBrush} color={color} setColor={setColor} />
+      <div className="flex flex-wrap items-center gap-1.5">
+        <PaintToolbar tool={tool} setTool={setTool} brush={brush} setBrush={setBrush} color={color} setColor={setColor} />
+        <ViewportBar view={view} fitToCanvas={() => fitToCanvas(canvasRef.current ? canvasRef.current.clientWidth : 0, canvasRef.current ? canvasRef.current.clientHeight : 0)} zoomBy={zoomBy} />
+      </div>
 
       <PaletteBar palette={doc.palette} color={color} setColor={setColor} />
 
@@ -65,7 +70,6 @@ function PixelStudio({ busEmit }) {
         onReparent={px.reparent} />
 
       <SaveLoadBar
-        doc={doc}
         pngScale={pngScale} setPngScale={setPngScale}
         newSize={newSize} setNewSize={setNewSize}
         onExportPng={exportPng} onExportJson={exportJson}
