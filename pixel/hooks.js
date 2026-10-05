@@ -5,10 +5,19 @@
  * ======================================================= */
 
 function usePixelDoc(busEmit) {
-  const [doc, setDoc] = useState(() => loadPixelLocal() || newPixelDoc(16, 16));
+  const [hist, setHist] = useState(() => newHistory(loadPixelLocal() || newPixelDoc(16, 16)));
+  const doc = hist.present;
   const [selId, setSelId] = useState(null);
 
   useEffect(() => { savePixelLocal(doc); }, [doc]);
+
+  /* commit = nouvelle entrée undo ; coalesce = maj sans entrée (traction en cours) */
+  const commit = (fn) => setHist((h) => pushHistory(h, fn(h.present)));
+  const coalesce = (fn) => setHist((h) => coalesceHistory(h, fn(h.present)));
+  const setDoc = coalesce;
+
+  const undo = () => setHist((h) => undoHistory(h));
+  const redo = () => setHist((h) => redoHistory(h));
 
   const entries = useMemo(() => walkNodes(doc.root, null, []), [doc]);
   const sel = useMemo(() => entries.find((e) => e.node.id === selId) || null, [entries, selId]);
@@ -19,10 +28,10 @@ function usePixelDoc(busEmit) {
   }, [doc, sel]);
 
   /* remplace tout le doc (nouveau / import) et réinitialise la sélection */
-  const replaceDoc = (d) => { setDoc(d); setSelId(null); };
+  const replaceDoc = (d) => { commit(() => d); setSelId(null); };
 
   /* opérations calques */
-  const setNodeProps = (id, fn) => setDoc((d) => ({ ...d, root: updateNode(d.root, id, fn) }));
+  const setNodeProps = (id, fn) => commit((d) => ({ ...d, root: updateNode(d.root, id, fn) }));
 
   const renameNode = (id, name) => {
     const n = name.trim();
@@ -30,7 +39,7 @@ function usePixelDoc(busEmit) {
   };
 
   const addLayer = () => {
-    setDoc((d) => {
+    commit((d) => {
       const layer = makeLayer(d.width, d.height, "Calque " + (countLayers(d.root) + 1));
       const target = sel && sel.node.type === "group" ? sel.node.id : null;
       return { ...d, root: insertNode(d.root, target, layer, 0) };
@@ -39,7 +48,7 @@ function usePixelDoc(busEmit) {
   };
 
   const addGroup = () => {
-    setDoc((d) => {
+    commit((d) => {
       const g = makeGroup("Groupe " + (listGroups(d.root).length + 1));
       return { ...d, root: insertNode(d.root, null, g, 0) };
     });
@@ -47,22 +56,22 @@ function usePixelDoc(busEmit) {
   };
 
   const delNode = (id) => {
-    setDoc((d) => ({ ...d, root: removeNode(d.root, id) }));
+    commit((d) => ({ ...d, root: removeNode(d.root, id) }));
     if (selId === id) setSelId(null);
     busEmit("pixel:node-deleted", {});
   };
 
-  const moveNodeBy = (id, dir) => setDoc((d) => ({ ...d, root: moveNode(d.root, id, dir) }));
+  const moveNodeBy = (id, dir) => commit((d) => ({ ...d, root: moveNode(d.root, id, dir) }))
 
   const reparent = (id, targetId) => {
-    setDoc((d) => ({ ...d, root: reparentNode(d.root, id, targetId) }));
+    commit((d) => ({ ...d, root: reparentNode(d.root, id, targetId) }));
     busEmit("pixel:reparented", {});
   };
 
   const applyChecker = (color) => {
     if (!paintLayer) return;
     const layerId = paintLayer.id;
-    setDoc((d) => {
+    commit((d) => {
       const cc = colorToChar(d.palette, color);
       return { ...d, palette: cc.palette, root: updateLayerRows(d.root, layerId, () => checkerRows(d.width, d.height, cc.ch)) };
     });
@@ -71,11 +80,12 @@ function usePixelDoc(busEmit) {
 
   return {
     doc, setDoc, replaceDoc, selId, setSelId, entries, sel, paintLayer,
+    undo, redo, canUndo: canUndo(hist), canRedo: canRedo(hist),
     setNodeProps, renameNode, addLayer, addGroup, delNode, moveNodeBy, reparent, applyChecker,
   };
 }
 
-function usePaintSession(doc, setDoc, paintLayer, busEmit) {
+function usePaintSession(doc, setDoc, commit, paintLayer, busEmit) {
   const [tool, setTool] = useState("brush");
   const [color, setColor] = useState("#000000");
   const [brush, setBrush] = useState(1);
@@ -84,6 +94,10 @@ function usePaintSession(doc, setDoc, paintLayer, busEmit) {
   /* suivi du pinch/pan : pointeurs actifs + dernier état */
   const pointers = useRef(new Map());
   const gesture = useRef({ pinchDist: 0, pan: null, painted: false });
+  /* refs vers undo/redo pour les raccourcis clavier */
+  const undoRef = useRef(null);
+  const redoRef = useRef(null);
+  const setUndoRedo = (undo, redo) => { undoRef.current = undo; redoRef.current = redo; };
 
   const setCanvasSize = (cw, ch) => {
     setView((v) => clampPan(v, doc, cw, ch));
@@ -111,7 +125,17 @@ function usePaintSession(doc, setDoc, paintLayer, busEmit) {
     }
     if (!paintLayer) return;
     const layerId = paintLayer.id;
-    setDoc((d) => paintAt(d, layerId, c, tool, color, brush));
+    /* 1er coup du tracé → entrée undo ; suivants → fusion dans la même entrée */
+    if (drawing.current && gesture.current.painted) setDoc((d) => paintAt(d, layerId, c, tool, color, brush));
+    else { commit((d) => paintAt(d, layerId, c, tool, color, brush)); gesture.current.painted = true; }
+  };
+
+  /* raccourcis clavier : Ctrl+Z undo, Ctrl+Y / Ctrl+Shift+Z redo */
+  const onKeydown = (e) => {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+    const k = e.key.toLowerCase();
+    if (k === "z" && !e.shiftKey) { e.preventDefault(); undoRef.current(); }
+    else if ((k === "y") || (k === "z" && e.shiftKey)) { e.preventDefault(); redoRef.current(); }
   };
 
   /* ---- gestures : 1 doigt = peindre, 2 doigts = pinch zoom + pan ---- */
@@ -191,5 +215,6 @@ function usePaintSession(doc, setDoc, paintLayer, busEmit) {
   return {
     tool, setTool, color, setColor, brush, setBrush,
     view, setView, setCanvasSize, fitToCanvas, zoomBy, handlers,
+    setUndoRedo, onKeydown,
   };
 }

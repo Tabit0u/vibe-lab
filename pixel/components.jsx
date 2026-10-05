@@ -45,7 +45,8 @@ function ViewportBar({ view, fitToCanvas, zoomBy }) {
   );
 }
 
-function PaintToolbar({ tool, setTool, brush, setBrush, color, setColor }) {
+function PaintToolbar({ tool, setTool, brush, setBrush, color, setColor,
+                       canUndo, canRedo, onUndo, onRedo }) {
   const tools = [
     { id: "brush", label: "🖌 Pinceau" },
     { id: "eraser", label: "🧽 Gomme" },
@@ -53,6 +54,10 @@ function PaintToolbar({ tool, setTool, brush, setBrush, color, setColor }) {
   ];
   return (
     <div className="flex flex-wrap items-center gap-1.5">
+      <button onClick={onUndo} disabled={!canUndo}
+              className="rounded-lg bg-slate-800 px-2.5 py-1.5 text-xs font-semibold text-slate-200 active:scale-95 disabled:opacity-30" title="Annuler (Ctrl+Z)">↩</button>
+      <button onClick={onRedo} disabled={!canRedo}
+              className="rounded-lg bg-slate-800 px-2.5 py-1.5 text-xs font-semibold text-slate-200 active:scale-95 disabled:opacity-30" title="Rétablir (Ctrl+Y)">↪</button>
       {tools.map((t) => (
         <button key={t.id} onClick={() => setTool(t.id)}
                 className={"rounded-lg px-2.5 py-1.5 text-xs font-semibold active:scale-95 " + (tool === t.id ? "bg-violet-600 text-white" : "bg-slate-800 text-slate-300")}>

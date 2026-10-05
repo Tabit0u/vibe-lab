@@ -13,8 +13,14 @@ function PixelStudio({ busEmit }) {
 
   const px = usePixelDoc(busEmit);
   const { doc, replaceDoc, selId, setSelId, entries, applyChecker } = px;
-  const session = usePaintSession(doc, px.setDoc, px.paintLayer, busEmit);
-  const { tool, setTool, color, setColor, brush, setBrush, view, setCanvasSize, fitToCanvas, zoomBy } = session;
+  const session = usePaintSession(doc, px.setDoc, px.commit, px.paintLayer, busEmit);
+  const { tool, setTool, color, setColor, brush, setBrush, view, setCanvasSize, fitToCanvas, zoomBy, setUndoRedo, onKeydown } = session;
+
+  useEffect(() => { setUndoRedo(px.undo, px.redo); }, [px.undo, px.redo]);
+  useEffect(() => {
+    window.addEventListener("keydown", onKeydown);
+    return () => window.removeEventListener("keydown", onKeydown);
+  }, [onKeydown]);
 
   /* renommage inline */
   const startRename = (node) => { setEditingId(node.id); setDraft(node.name); };
@@ -44,7 +50,8 @@ function PixelStudio({ busEmit }) {
                    handlers={session.handlers} />
 
       <div className="flex flex-wrap items-center gap-1.5">
-        <PaintToolbar tool={tool} setTool={setTool} brush={brush} setBrush={setBrush} color={color} setColor={setColor} />
+        <PaintToolbar tool={tool} setTool={setTool} brush={brush} setBrush={setBrush} color={color} setColor={setColor}
+                      canUndo={px.canUndo} canRedo={px.canRedo} onUndo={px.undo} onRedo={px.redo} />
         <ViewportBar view={view} fitToCanvas={() => fitToCanvas(canvasRef.current ? canvasRef.current.clientWidth : 0, canvasRef.current ? canvasRef.current.clientHeight : 0)} zoomBy={zoomBy} />
       </div>
 
