@@ -79,7 +79,7 @@ function usePixelDoc(busEmit) {
   };
 
   return {
-    doc, setDoc, replaceDoc, selId, setSelId, entries, sel, paintLayer,
+    doc, setDoc, commit, replaceDoc, selId, setSelId, entries, sel, paintLayer,
     undo, redo, canUndo: canUndo(hist), canRedo: canRedo(hist),
     setNodeProps, renameNode, addLayer, addGroup, delNode, moveNodeBy, reparent, applyChecker,
   };
@@ -154,7 +154,7 @@ function usePaintSession(doc, setDoc, commit, paintLayer, busEmit) {
 
   const handlers = {
     onPointerDown: (e) => {
-      pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      pointers.current.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
       if (pointers.current.size === 1) {
         drawing.current = true;
         gesture.current.painted = false;
@@ -169,7 +169,7 @@ function usePaintSession(doc, setDoc, commit, paintLayer, busEmit) {
       }
     },
     onPointerMove: (e) => {
-      if (pointers.current.has(e.pointerId)) pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.current.has(e.pointerId)) pointers.current.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
       if (pointers.current.size >= 2) {
         const [a, b] = Array.from(pointers.current.values());
         const info = pinchInfo(a, b);
