@@ -31,7 +31,7 @@ function App() {
       <nav className="flex gap-1 overflow-x-auto rounded-xl bg-slate-800 p-1">
         {tabs.map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className="flex-1 whitespace-nowrap rounded-lg px-2 py-2 text-[11px] font-semibold transition " + (tab === t.id ? "bg-violet-600 text-white" : "text-slate-300")}>
+            className={"flex-1 whitespace-nowrap rounded-lg px-2 py-2 text-[11px] font-semibold transition " + (tab === t.id ? "bg-violet-600 text-white" : "text-slate-300")}>
             {t.label}
           </button>
         ))}

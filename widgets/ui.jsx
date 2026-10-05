@@ -26,7 +26,15 @@ function WidgetPanel({ state, setState, log }) {
       </div>
       <div className="rounded-xl border border-slate-700 bg-black/60 p-3">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Flux de signaux (temps réel)</p>
-        </div>
+        {log.length === 0 ? (
+          <p className="text-xs text-slate-500">Aucun signal pour l'instant…</p>
+        ) : (
+          <ul className="flex flex-col gap-1 font-mono text-[11px] text-cyan-300">
+            {log.map((l, i) => (
+              <li key={i} className="truncate">{l}</li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
