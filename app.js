@@ -44,7 +44,7 @@ function App() {
         {tab === "fichiers" && <FilesPanel state={state} setState={setState} busEmit={busEmit} />}
       </main>
 
-      <footer className="text-center text-[11px] text-slate-500">Vibe Lab v0.5 — fait avec Vibe, testé depuis ton téléphone 📱</footer>
+      <footer className="text-center text-[11px] text-slate-500">Vibe Lab v0.6 — fait avec Vibe, testé depuis ton téléphone 📱</footer>
     </div>
   );
 }

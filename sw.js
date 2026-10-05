@@ -1,4 +1,4 @@
-const CACHE = "vibe-lab-v9";
+const CACHE = "vibe-lab-v10";
 const ASSETS = [
   "./", "./index.html", "./manifest.webmanifest", "./icon.svg",
   "./core/signals.js", "./core/storage.js",
