@@ -156,10 +156,12 @@ function usePaintSession(doc, setDoc, commit, paintLayer, busEmit) {
     onPointerDown: (e) => {
       pointers.current.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
       if (pointers.current.size === 1) {
+        /* pas de peinture au contact : on attend un mouvement (drag) ou le relâchement (tap),
+           sinon un pixel est peint dès que le 2e doigt pose pour le pinch */
         drawing.current = true;
         gesture.current.painted = false;
+        gesture.current.slop = { x: e.clientX, y: e.clientY, done: false };
         try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
-        paintCell(e);
       } else {
         /* 2e doigt : on arrête le tracé, on démarre le pinch */
         drawing.current = false;
@@ -186,12 +188,21 @@ function usePaintSession(doc, setDoc, commit, paintLayer, busEmit) {
           return clampPan(nv, doc, rect.width, rect.height);
         });
       } else if (drawing.current) {
+        /* touch slop : ignorer les micro-mouvements (< ~6 px) avant de peindre */
+        const s = gesture.current.slop;
+        if (s && !s.done) {
+          const dx = e.clientX - s.x, dy = e.clientY - s.y;
+          if (dx * dx + dy * dy < 36) return;
+          s.done = true;
+        }
         paintCell(e);
       }
     },
     onPointerUp: (e) => {
       pointers.current.delete(e.pointerId);
       if (pointers.current.size === 0) {
+        /* tap sans mouvement ni 2e doigt → on peint la cellule maintenant */
+        if (drawing.current && !gesture.current.painted) paintCell(e);
         drawing.current = false;
         gesture.current.pan = null;
       } else if (pointers.current.size === 1) {
