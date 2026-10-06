@@ -1,4 +1,4 @@
-const CACHE = "vibe-lab-v11";
+const CACHE = "vibe-lab-v12";
 const ASSETS = [
   "./", "./index.html", "./manifest.webmanifest", "./icon.svg",
   "./core/signals.js", "./core/storage.js",
@@ -45,7 +45,17 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   const isCdn = url.hostname !== self.location.hostname;
   if (isCdn) {
-    e.respondWith(caches.match(e.request).then((r) => r || fetch(e.request)));
+    e.respondWith(
+      fetch(e.request)
+        .then((res) => {
+          if (res.ok && e.request.method === "GET") {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(e.request, copy));
+          }
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
     return;
   }
   /* navigation (index.html) : TOUJOURS réseau d'abord, jamais de copie périmée */

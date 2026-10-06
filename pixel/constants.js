@@ -21,3 +21,4 @@ const PIX_DEFAULT_PALETTE = ["#ffffff", "#000000", "#ef4444", "#f97316", "#facc1
 let _uid = Math.floor(Math.random() * 1e6);
 const uid = () => ++_uid;
 const clamp01 = (v) => Math.min(1, Math.max(0, +v || 0));
+const clampDim = (v) => Math.min(PIX_MAX_SIZE, Math.max(1, Math.round(+v) || 1));
