@@ -9,7 +9,7 @@ function PixelStudio({ busEmit }) {
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState("");
   const [pngScale, setPngScale] = useState(8);
-  const [newSize, setNewSize] = useState(16);
+  const [newSize, setNewSize] = useState({ w: 16, h: 16 });
 
   const px = usePixelDoc(busEmit);
   const { doc, replaceDoc, selId, setSelId, entries, applyChecker } = px;
@@ -41,7 +41,7 @@ function PixelStudio({ busEmit }) {
       .catch(() => busEmit("pixel:error", {}));
     e.target.value = "";
   };
-  const resetDoc = () => replaceDoc(newPixelDoc(newSize, newSize));
+  const resetDoc = () => replaceDoc(newPixelDoc(newSize.w, newSize.h));
 
   return (
     <div className="flex flex-col gap-3 text-sm">

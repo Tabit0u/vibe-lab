@@ -82,12 +82,17 @@ function PaintToolbar({ tool, setTool, brush, setBrush, color, setColor,
 
 function PaletteBar({ palette, color, setColor }) {
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap items-center gap-1.5">
       {palette.map((c, i) => (
         <button key={c + i} onClick={() => setColor(c)} title={c}
                 className={"h-7 w-7 rounded border-2 " + (color.toLowerCase() === c.toLowerCase() ? "border-violet-400" : "border-slate-700")}
                 style={{ background: c }} />
       ))}
+      <label title="Choisir une couleur arbitraire (ajoutée à la palette au premier tracé)"
+             className="flex h-7 w-7 cursor-pointer items-center justify-center rounded border-2 border-dashed border-slate-500 bg-slate-800/60 text-[13px] leading-none text-slate-300 hover:border-violet-400">
+        ＋
+        <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-0 w-0 opacity-0" />
+      </label>
     </div>
   );
 }
@@ -160,9 +165,13 @@ function SaveLoadBar({ pngScale, setPngScale, newSize, setNewSize,
         <button onClick={onExportJson} className="rounded-lg bg-cyan-600 px-3 py-1.5 text-xs font-semibold active:scale-95">⬇ .json</button>
         <button onClick={() => fileRef.current && fileRef.current.click()} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold active:scale-95">⬆ .json</button>
         <button onClick={onNewDoc} className="rounded-lg bg-rose-700 px-3 py-1.5 text-xs font-semibold active:scale-95">🆕 Nouveau</button>
-        <select value={newSize} onChange={(e) => setNewSize(Number(e.target.value))} className="rounded-lg bg-slate-800 px-1 py-1.5 text-xs">
-          {[8, 16, 24, 32].map((s) => <option key={s} value={s}>{s}×{s}</option>)}
-        </select>
+        <input type="number" min="1" max="128" value={newSize.w}
+               onChange={(e) => setNewSize({ ...newSize, w: clampDim(e.target.value) })}
+               className="w-14 rounded-lg bg-slate-800 px-2 py-1.5 text-xs" title="Largeur" />
+        <span className="text-[11px] text-slate-400">×</span>
+        <input type="number" min="1" max="128" value={newSize.h}
+               onChange={(e) => setNewSize({ ...newSize, h: clampDim(e.target.value) })}
+               className="w-14 rounded-lg bg-slate-800 px-2 py-1.5 text-xs" title="Hauteur" />
         <input ref={fileRef} type="file" accept=".json,application/json" onChange={onImportJson} className="hidden" />
       </div>
       <p className="text-[11px] text-slate-500">
